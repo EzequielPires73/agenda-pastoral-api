@@ -1,7 +1,7 @@
-import { Column, Entity } from "typeorm";
+import { Column, Entity, Unique } from "typeorm";
 import { UserModel } from "src/models/user.model";
 
-enum TypeUserEnum {
+export enum TypeUserEnum {
     admin = 'admin',
     superadmin = 'superadmin',
     default = 'default',
@@ -10,6 +10,7 @@ enum TypeUserEnum {
 }
 
 @Entity()
+@Unique(['email'])
 export class User extends UserModel {
     @Column({type: 'simple-enum', enum: TypeUserEnum, default: TypeUserEnum.default})
     type: TypeUserEnum;

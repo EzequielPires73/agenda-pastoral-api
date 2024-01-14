@@ -9,6 +9,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { AppointmentsCategoriesModule } from './modules/appointments-categories/appointments-categories.module';
 import { AvailableTimesModule } from './modules/available-times/available-times.module';
 import { ShepherdsModule } from './modules/shepherds/shepherds.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ShepherdsModule } from './modules/shepherds/shepherds.module';
     AppointmentsCategoriesModule,
     AvailableTimesModule,
     ShepherdsModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
