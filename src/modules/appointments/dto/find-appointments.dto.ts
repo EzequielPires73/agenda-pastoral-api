@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { AppointmentStatus } from "../entities/appointment.entity";
 
 export class FindAppointmentsDto {
     @ApiPropertyOptional({default: null})
@@ -12,4 +13,7 @@ export class FindAppointmentsDto {
 
     @ApiPropertyOptional({default: 2024})
     year: number;
+
+    @ApiPropertyOptional({default: AppointmentStatus.pendente})
+    status: AppointmentStatus;
 }

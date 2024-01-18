@@ -3,6 +3,13 @@ import { Member } from "src/modules/members/entities/member.entity";
 import { User } from "src/modules/users/entities/user.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
+export enum AppointmentStatus {
+    pendente='pendente',
+    confirmado='confirmado',
+    finalizado='finalizado',
+    declinado='declinado',
+}
+
 @Entity()
 export class Appointment {
     @PrimaryGeneratedColumn()
@@ -19,9 +26,12 @@ export class Appointment {
 
     @Column({ type: 'time' })
     start: string;
-    
+
     @Column({ type: 'time' })
     end: string;
+
+    @Column({type: 'simple-enum', enum: AppointmentStatus, default: AppointmentStatus.pendente})
+    status: AppointmentStatus;
 
     @ManyToOne(() => Member, member => member.appointments)
     member: Member;

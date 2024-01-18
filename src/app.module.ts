@@ -35,6 +35,7 @@ import { FirebaseService } from './services/firebase.service';
   ],
   controllers: [AppController],
   providers: [AppService, FirebaseService],
+  exports: [FirebaseService]
 })
 export class AppModule {
   constructor() {

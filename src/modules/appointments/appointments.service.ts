@@ -3,16 +3,20 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Appointment } from './entities/appointment.entity';
+import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
 import { FindAppointmentsDto } from './dto/find-appointments.dto';
 import { isValidDateFormat } from 'src/helpers/date';
+import { FirebaseService } from 'src/services/firebase.service';
+import { Member } from '../members/entities/member.entity';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     @InjectRepository(Appointment) private repository: Repository<Appointment>,
-    private appointmentsCategoriesService: AppointmentsCategoriesService
+    @InjectRepository(Member) private memberRepository: Repository<Member>,
+    private appointmentsCategoriesService: AppointmentsCategoriesService,
+    private readonly firebaseService: FirebaseService
   ) { }
 
   async create(createAppointmentDto: CreateAppointmentDto) {
@@ -21,7 +25,10 @@ export class AppointmentsService {
       const date = new Date(`${data.date}T${data.start}`);
 
       const category = await this.appointmentsCategoriesService.findOne(categoryId);
-      if(!category) throw new Error('Categoria não foi encontrada.');
+      if (!category) throw new Error('Categoria não foi encontrada.');
+
+      const member = await this.memberRepository.findOneBy({ id: memberId });
+      if (!member) throw new Error('Membro não foi encontrado.');
 
       date.setMinutes(date.getMinutes() + category.duration);
 
@@ -34,12 +41,19 @@ export class AppointmentsService {
         ...data
       });
 
+      const result = await this.repository.save(appointment);
+
+      if (result && member.notificationToken) {
+        const message = await this.firebaseService.sendMessaging({ token: member.notificationToken, title: category.name, body: `Um compromisso foi marcado, confira as informações.`, route: '/notification' });
+
+        console.log(message);
+      }
+
       return {
         success: true,
         message: 'Compromisso marcado com sucesso',
-        result: await this.repository.save(appointment)
+        result,
       }
-
     } catch (error) {
       return {
         success: false,
@@ -50,9 +64,9 @@ export class AppointmentsService {
 
   async generateId() {
     const id = Math.floor(100000 + Math.random() * 900000);
-    
-    const exists = await this.repository.findOneBy({id});
-    if(exists) {
+
+    const exists = await this.repository.findOneBy({ id });
+    if (exists) {
       return await this.generateId()
     } else {
       return id;
@@ -61,24 +75,31 @@ export class AppointmentsService {
 
   async findAll(queryDto: FindAppointmentsDto) {
     try {
-      const {date, year, month, memberId} = queryDto;
+      const { date, year, month, memberId, status } = queryDto;
 
-      if(!isValidDateFormat(date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd'); 
 
       const query = this.repository.createQueryBuilder('appointment')
-      .leftJoinAndSelect('appointment.member', 'member')
+        .leftJoinAndSelect('appointment.member', 'member')
+        .leftJoinAndSelect('appointment.category', 'category');
 
-      {memberId ? query.andWhere('member.id = :memberId', {memberId}) : null}
-      {date ? query.andWhere('appointment.date = :date', {date}) : null}
+      /* query.addSelect(['member.id', 'member.name', 'member.email']); */
 
-      if(month && year) {
+      { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
+      { status ? query.andWhere('appointment.status = :status', { status }) : null }
+
+      if (date) {
+        if (!isValidDateFormat(date?.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd');
+        query.andWhere('appointment.date = :date', { date })
+      }
+
+      if (month && year) {
         const start = new Date(year, month - 1, 1);
         const end = new Date(year, month, 0);
 
-        query.andWhere('appointment.date >= :start', {start: start});
-        query.andWhere('appointment.date <= :end', {end: end});
+        query.andWhere('appointment.date >= :start', { start: start });
+        query.andWhere('appointment.date <= :end', { end: end });
       }
-      
+
       const [results, total] = await query.getManyAndCount();
 
       return {
@@ -86,6 +107,27 @@ export class AppointmentsService {
         results,
         total
       };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  async changeStatus(id: number, status: AppointmentStatus) {
+    try {
+      const appointment = await this.repository.findOneBy({ id });
+      if (!appointment) throw new Error('Compromisso não foi encontrado.');
+
+      await this.repository.update(id, { status: status });
+
+      console.log(status);
+
+      return {
+        success: true,
+        result: await this.repository.findOneBy({ id })
+      }
     } catch (error) {
       return {
         success: false,

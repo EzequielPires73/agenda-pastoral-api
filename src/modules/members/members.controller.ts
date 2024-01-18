@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('Members')
 @Controller('members')
@@ -22,6 +23,13 @@ export class MembersController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('push-notification-token')
+  pushNotificationToken(@Body() {token}: { token: string; }, @Req() {user}: {user: any}) {
+    return this.membersService.pushNotificationToken(token, user);
   }
 
   @Patch(':id')

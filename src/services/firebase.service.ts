@@ -18,7 +18,8 @@ export class FirebaseService {
             
             return {
                 success: true,
-                message: 'Notificação enviada com sucesso.'
+                message: 'Notificação enviada com sucesso.',
+                res
             }
         } catch (error) {
             console.log(error.message);
