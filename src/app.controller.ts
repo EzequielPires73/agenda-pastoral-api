@@ -8,9 +8,9 @@ export class AppController {
     private readonly firebaseService: FirebaseService
   ) { }
 
-  @Get()
+  @Get('date')
   getHello() {
-    return new Date(2024, 1, 0);
+    return new Date(2024, 2, 1);
   }
 
   @Post('send-notification')

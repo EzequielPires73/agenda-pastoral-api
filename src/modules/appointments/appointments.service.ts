@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
+import { FindAppointmentsDto } from './dto/find-appointments.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -57,8 +58,37 @@ export class AppointmentsService {
     }
   }
 
-  findAll() {
-    return `This action returns all appointments`;
+  async findAll(queryDto: FindAppointmentsDto) {
+    try {
+      const {date, year, month, memberId} = queryDto;
+
+      const query = this.repository.createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.member', 'member')
+
+      {memberId ? query.andWhere('member.id = :memberId', {memberId}) : null}
+      {date ? query.andWhere('appointment.date = :date', {date}) : null}
+
+      if(month && year) {
+        const start = new Date(year, month - 1, 1);
+        const end = new Date(year, month, 0);
+
+        query.andWhere('appointment.date >= :start', {start: start});
+        query.andWhere('appointment.date <= :end', {end: end});
+      }
+      
+      const [results, total] = await query.getManyAndCount();
+
+      return {
+        success: true,
+        results,
+        total
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
   }
 
   findOne(id: number) {
