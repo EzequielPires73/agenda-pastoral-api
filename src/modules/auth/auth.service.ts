@@ -27,6 +27,7 @@ export class AuthService {
         }
 
         return {
+            success: true,
             user: result,
             access_token: await this.jwtService.signAsync(payload),
         };
@@ -47,6 +48,7 @@ export class AuthService {
         }
 
         return {
+            success: true,
             user: {...result, type: TypeUserEnum.MEMBER,},
             access_token: await this.jwtService.signAsync(payload),
         };
