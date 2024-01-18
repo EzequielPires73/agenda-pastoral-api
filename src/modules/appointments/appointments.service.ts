@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
 import { FindAppointmentsDto } from './dto/find-appointments.dto';
+import { isValidDateFormat } from 'src/helpers/date';
 
 @Injectable()
 export class AppointmentsService {
@@ -61,6 +62,8 @@ export class AppointmentsService {
   async findAll(queryDto: FindAppointmentsDto) {
     try {
       const {date, year, month, memberId} = queryDto;
+
+      if(!isValidDateFormat(date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd'); 
 
       const query = this.repository.createQueryBuilder('appointment')
       .leftJoinAndSelect('appointment.member', 'member')

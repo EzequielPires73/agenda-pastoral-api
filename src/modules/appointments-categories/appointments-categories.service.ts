@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import slugify from 'slugify';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { AvailableTime } from '../available-times/entities/available-time.entity';
+import { isValidDateFormat } from 'src/helpers/date';
 
 @Injectable()
 export class AppointmentsCategoriesService {
@@ -83,6 +84,8 @@ export class AppointmentsCategoriesService {
 
   async availableTimes(id, date) {
     try {
+      if(!isValidDateFormat(date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd'); 
+
       const category = await this.repository.findOne({ where: { id } });
       if (!category) throw new Error('Categoria não existe.');
 

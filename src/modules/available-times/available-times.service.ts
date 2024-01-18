@@ -4,6 +4,7 @@ import { UpdateAvailableTimeDto } from './dto/update-available-time.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AvailableTime } from './entities/available-time.entity';
 import { LessThan, MoreThan, Repository } from 'typeorm';
+import { isValidDateFormat, isValidTimeFormat, isValidTimeRange } from 'src/helpers/date';
 
 @Injectable()
 export class AvailableTimesService {
@@ -13,8 +14,11 @@ export class AvailableTimesService {
 
   async create(createAvailableTimeDto: CreateAvailableTimeDto) {
     try {
-      const availableTime = this.repository.create(createAvailableTimeDto);
+      if(!isValidDateFormat(createAvailableTimeDto.date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd'); 
+      if(!isValidTimeFormat(createAvailableTimeDto.end) || !isValidTimeFormat(createAvailableTimeDto.end)) throw new Error('Formato da horário deve ser 00:00:00'); 
+      if(!isValidTimeRange(createAvailableTimeDto.start, createAvailableTimeDto.end)) throw new Error('O intervalo de tempo não é válido.'); 
 
+      const availableTime = this.repository.create(createAvailableTimeDto);
       const exists = await this.verify(createAvailableTimeDto);
       
       if (exists.length > 0) {
