@@ -17,6 +17,6 @@ export class CreateUserDto {
     @ApiProperty({default: '123456789'})
     password: string;
 
-    @ApiProperty({default: TypeUserEnum.admin, enum: TypeUserEnum})
+    @ApiProperty({default: TypeUserEnum.ADMIN, enum: TypeUserEnum})
     type: TypeUserEnum;
 }

@@ -20,6 +20,9 @@ export class UserModel {
     @Column()
     password: string;
 
+    @Column({nullable: true})
+    notificationToken: string;
+
     @BeforeInsert()
     hashPassword() {
         this.password = hashSync(this.password, 10);

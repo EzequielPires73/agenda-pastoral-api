@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AppointmentsCategoriesService } from './appointments-categories.service';
 import { CreateAppointmentsCategoryDto } from './dto/create-appointments-category.dto';
 import { UpdateAppointmentsCategoryDto } from './dto/update-appointments-category.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { FindTimesDto } from './dto/find-times.dto';
 
 @ApiTags('Appointments Categories')
 @Controller('appointments-categories')
@@ -17,6 +18,11 @@ export class AppointmentsCategoriesController {
   @Get()
   findAll() {
     return this.appointmentsCategoriesService.findAll();
+  }
+  
+  @Get('avaible-times/:id')
+  availableTimes(@Param('id') id: string, @Query() query: FindTimesDto) {
+    return this.appointmentsCategoriesService.availableTimes(id, query.date);
   }
 
   @Get(':id')

@@ -18,7 +18,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Post('login/members')
     signInMembers(@Body() signInDto: SignInDto) {
-        return this.authService.signIn(signInDto.email, signInDto.password);
+        return this.authService.signInMember(signInDto.email, signInDto.password);
     }
 
     @ApiBearerAuth()

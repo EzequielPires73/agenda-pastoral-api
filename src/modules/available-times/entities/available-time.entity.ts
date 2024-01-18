@@ -1,4 +1,3 @@
-import { Shepherd } from "src/modules/shepherds/entities/shepherd.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -14,7 +13,4 @@ export class AvailableTime {
     
     @Column({ type: 'time' })
     end: string;
-
-    @ManyToOne(() => Shepherd, shepherd => shepherd.availableTimes)
-    shepherd: Shepherd;
 }

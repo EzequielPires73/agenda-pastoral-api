@@ -2,19 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { TypeUserEnum, User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private repository: Repository<User>
-  ) { }
+  ) {
+    this.verifySuperAdmin();
+  }
 
   async create(createUserDto: CreateUserDto) {
     try {
-      const result = await this.repository.findOneBy({email: createUserDto.email});
-      if(result) throw new Error(`Usuário com o email ${createUserDto.email} já existe.`);
+      const result = await this.repository.findOneBy({ email: createUserDto.email });
+      if (result) throw new Error(`Usuário com o email ${createUserDto.email} já existe.`);
 
       const user = this.repository.create(createUserDto);
 
@@ -49,9 +51,9 @@ export class UsersService {
 
   async findOne(id: string) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Usuário não foi encontrado.');
+      if (!result) throw new Error('Usuário não foi encontrado.');
 
       return {
         success: true,
@@ -65,10 +67,29 @@ export class UsersService {
     }
   }
 
+  async pushNotificationToken(notificationToken: string, user: any) {
+    try {
+      const result = await this.repository.findOneBy({ id: user.id });
+      if (!result) throw new Error('Usuário não foi encontrado.');
+
+      await this.repository.update(result.id, {notificationToken});
+
+      return {
+        success: true,
+        message: 'Token registrado com sucesso.'
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
   async findOneByEmail(email: string) {
     try {
-      const userAlreadyExists = await this.repository.findOneBy({email});
-      if(!userAlreadyExists) return null;
+      const userAlreadyExists = await this.repository.findOneBy({ email });
+      if (!userAlreadyExists) return null;
 
       return userAlreadyExists
     } catch (error) {
@@ -78,15 +99,15 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Usuário não foi encontrado.');
+      if (!result) throw new Error('Usuário não foi encontrado.');
 
       await this.repository.update(id, updateUserDto);
 
       return {
         success: true,
-        result: await this.repository.findOneBy({id}),
+        result: await this.repository.findOneBy({ id }),
       }
     } catch (error) {
       return {
@@ -98,9 +119,9 @@ export class UsersService {
 
   async remove(id: string) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Usuário não foi encontrado.');
+      if (!result) throw new Error('Usuário não foi encontrado.');
 
       await this.repository.delete(id);
 
@@ -113,6 +134,23 @@ export class UsersService {
         success: false,
         message: error.message
       }
+    }
+  }
+
+  async verifySuperAdmin() {
+    try {
+      const superAdmin = await this.repository.findOneBy({ type: TypeUserEnum.SUPER_ADMIN });
+      if (!superAdmin) {
+        const user = new User();
+        user.name = 'Super Admin';
+        user.email = 'admin@mindease.com.br';
+        user.password = 'term228687535';
+        user.phone = '(64) 99626-8117';
+        user.type = TypeUserEnum.SUPER_ADMIN;
+        await this.repository.save(user);
+      }
+    } catch (error) {
+      console.log(error.message);
     }
   }
 }

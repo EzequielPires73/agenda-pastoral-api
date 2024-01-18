@@ -65,6 +65,25 @@ export class MembersService {
     }
   }
 
+  async pushNotificationToken(notificationToken: string, user: any) {
+    try {
+      const result = await this.repository.findOneBy({ id: user.id });
+      if (!result) throw new Error('Membro não foi encontrado.');
+
+      await this.repository.update(result.id, {notificationToken});
+
+      return {
+        success: true,
+        message: 'Token registrado com sucesso.'
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
   async findOneByEmail(email: string) {
     try {
       const userAlreadyExists = await this.repository.findOneBy({email});

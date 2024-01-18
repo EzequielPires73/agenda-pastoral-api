@@ -1,7 +1,8 @@
 import { Appointment } from "src/modules/appointments/entities/appointment.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 @Entity()
+@Unique(['name'])
 export class AppointmentsCategory {
     @PrimaryGeneratedColumn()
     id: number;

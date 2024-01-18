@@ -8,8 +8,10 @@ import { MembersModule } from './modules/members/members.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { AppointmentsCategoriesModule } from './modules/appointments-categories/appointments-categories.module';
 import { AvailableTimesModule } from './modules/available-times/available-times.module';
-import { ShepherdsModule } from './modules/shepherds/shepherds.module';
 import { AuthModule } from './modules/auth/auth.module';
+import * as admin from 'firebase-admin';
+import { firebase_config } from './config/firebase';
+import { FirebaseService } from './services/firebase.service';
 
 @Module({
   imports: [
@@ -29,10 +31,19 @@ import { AuthModule } from './modules/auth/auth.module';
     AppointmentsModule,
     AppointmentsCategoriesModule,
     AvailableTimesModule,
-    ShepherdsModule,
     AuthModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, FirebaseService],
 })
-export class AppModule { }
+export class AppModule {
+  constructor() {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        clientEmail: firebase_config.client_email,
+        privateKey: firebase_config.private_key,
+        projectId: firebase_config.project_id,
+      }),
+    })
+  }
+}

@@ -3,6 +3,7 @@ import { UsersService } from '../users/users.service';
 import { compareSync } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MembersService } from '../members/members.service';
+import { TypeUserEnum } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -41,11 +42,12 @@ export class AuthService {
         const { password, ...result } = user;
         const payload = {
             sub: user.id,
+            type: TypeUserEnum.MEMBER,
             ...result
         }
 
         return {
-            user: result,
+            user: {...result, type: TypeUserEnum.MEMBER,},
             access_token: await this.jwtService.signAsync(payload),
         };
     }
