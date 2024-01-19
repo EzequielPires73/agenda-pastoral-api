@@ -143,8 +143,8 @@ export class UsersService {
       if (!superAdmin) {
         const user = new User();
         user.name = 'Super Admin';
-        user.email = 'admin@mindease.com.br';
-        user.password = 'term228687535';
+        user.email = 'admin@adcatalao.com.br';
+        user.password = 'adcatalao';
         user.phone = '(64) 99626-8117';
         user.type = TypeUserEnum.SUPER_ADMIN;
         await this.repository.save(user);
