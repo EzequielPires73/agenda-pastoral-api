@@ -36,7 +36,17 @@ export class AppointmentsCategoriesService {
   }
 
   async findAll() {
-    return await this.repository.find();
+    try {
+      return {
+        success: true,
+        results: await this.repository.find()
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
   }
 
   async findOne(id: number) {
