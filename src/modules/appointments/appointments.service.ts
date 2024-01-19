@@ -44,9 +44,12 @@ export class AppointmentsService {
       const result = await this.repository.save(appointment);
 
       if (result && member.notificationToken) {
-        const message = await this.firebaseService.sendMessaging({ token: member.notificationToken, title: category.name, body: `Um compromisso foi marcado, confira as informações.`, route: '/notification' });
-
-        console.log(message);
+        await this.firebaseService.sendMessaging({
+          token: member.notificationToken,
+          title: category.name,
+          body: `Um compromisso foi marcado, confira as informações.`,
+          route: '/notification'
+        });
       }
 
       return {
@@ -76,7 +79,7 @@ export class AppointmentsService {
   async findAll(queryDto: FindAppointmentsDto) {
     try {
       const { date, year, month, memberId, status } = queryDto;
-
+      const statusArray = status ? status.split(',') : null;
 
       const query = this.repository.createQueryBuilder('appointment')
         .leftJoinAndSelect('appointment.member', 'member')
@@ -85,7 +88,7 @@ export class AppointmentsService {
       /* query.addSelect(['member.id', 'member.name', 'member.email']); */
 
       { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
-      { status ? query.andWhere('appointment.status = :status', { status }) : null }
+      { status ? query.andWhere('appointment.status IN (:...status)', { status: statusArray }) : null }
 
       if (date) {
         if (!isValidDateFormat(date?.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd');
@@ -117,12 +120,41 @@ export class AppointmentsService {
 
   async changeStatus(id: number, status: AppointmentStatus) {
     try {
-      const appointment = await this.repository.findOneBy({ id });
+      const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category'] });
       if (!appointment) throw new Error('Compromisso não foi encontrado.');
+      const member = appointment.member;
+      const category = appointment.category;
+
+      if (!AppointmentStatus[status]) throw new Error('Status inválido');
 
       await this.repository.update(id, { status: status });
 
-      console.log(status);
+      switch (status) {
+        case AppointmentStatus.confirmado:
+          await this.firebaseService.sendMessaging({
+            token: member.notificationToken,
+            title: category.name,
+            body: `O compromisso foi confirmado.`,
+            route: '/notification'
+          });
+          break;
+        case AppointmentStatus.declinado:
+          await this.firebaseService.sendMessaging({
+            token: member.notificationToken,
+            title: category.name,
+            body: `O compromisso foi declinado por motivos maiores.`,
+            route: '/notification'
+          });
+          break;
+        case AppointmentStatus.finalizado:
+          await this.firebaseService.sendMessaging({
+            token: member.notificationToken,
+            title: category.name,
+            body: `O compromisso foi finalizado.`,
+            route: '/notification'
+          });
+          break;
+      }
 
       return {
         success: true,
@@ -136,8 +168,21 @@ export class AppointmentsService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} appointment`;
+  async findOne(id: number) {
+    try {
+      const appointment = await this.repository.findOne({where: {id}, relations: ['member', 'category']});
+      if(!appointment) throw new Error('Compromisso não foi encontrado.');
+
+      return {
+        success: true,
+        result: appointment
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
   }
 
   update(id: number, updateAppointmentDto: UpdateAppointmentDto) {

@@ -13,8 +13,8 @@ export class MembersService {
 
   async create(createMemberDto: CreateMemberDto) {
     try {
-      const result = await this.repository.findOneBy({email: createMemberDto.email});
-      if(result) throw new Error(`Membro com o email ${createMemberDto.email} já existe.`);
+      const result = await this.repository.findOneBy({ email: createMemberDto.email });
+      if (result) throw new Error(`Membro com o email ${createMemberDto.email} já existe.`);
 
       const user = this.repository.create(createMemberDto);
 
@@ -49,9 +49,9 @@ export class MembersService {
 
   async findOne(id: string) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Membro não foi encontrado.');
+      if (!result) throw new Error('Membro não foi encontrado.');
 
       return {
         success: true,
@@ -67,12 +67,10 @@ export class MembersService {
 
   async pushNotificationToken(notificationToken: string, user: any) {
     try {
-      console.log(notificationToken, user);
-
       const result = await this.repository.findOneBy({ id: user.id });
       if (!result) throw new Error('Membro não foi encontrado.');
 
-      await this.repository.update(result.id, {notificationToken: notificationToken ?? null});
+      await this.repository.update(result.id, { notificationToken: notificationToken ?? null });
 
       return {
         success: true,
@@ -88,8 +86,8 @@ export class MembersService {
 
   async findOneByEmail(email: string) {
     try {
-      const userAlreadyExists = await this.repository.findOneBy({email});
-      if(!userAlreadyExists) return null;
+      const userAlreadyExists = await this.repository.findOneBy({ email });
+      if (!userAlreadyExists) return null;
 
       return userAlreadyExists
     } catch (error) {
@@ -99,15 +97,15 @@ export class MembersService {
 
   async update(id: string, updateMemberDto: UpdateMemberDto) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Membro não foi encontrado.');
+      if (!result) throw new Error('Membro não foi encontrado.');
 
       await this.repository.update(id, updateMemberDto);
 
       return {
         success: true,
-        result: await this.repository.findOneBy({id}),
+        result: await this.repository.findOneBy({ id }),
       }
     } catch (error) {
       return {
@@ -119,9 +117,9 @@ export class MembersService {
 
   async remove(id: string) {
     try {
-      const result = await this.repository.findOneBy({id});
+      const result = await this.repository.findOneBy({ id });
 
-      if(!result) throw new Error('Membro não foi encontrado.');
+      if (!result) throw new Error('Membro não foi encontrado.');
 
       await this.repository.delete(id);
 

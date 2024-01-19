@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AvailableTimesService } from './available-times.service';
 import { CreateAvailableTimeDto } from './dto/create-available-time.dto';
 import { UpdateAvailableTimeDto } from './dto/update-available-time.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { FindAvaibleTimesDto } from './dto/find-avaible-times.dto copy';
 
 @ApiTags('Available Times')
 @Controller('available-times')
@@ -15,8 +16,8 @@ export class AvailableTimesController {
   }
 
   @Get()
-  findAll() {
-    return this.availableTimesService.findAll();
+  findAll(@Query() query: FindAvaibleTimesDto) {
+    return this.availableTimesService.findAll(query);
   }
 
   @Get(':id')

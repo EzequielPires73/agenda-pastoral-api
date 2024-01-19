@@ -69,7 +69,6 @@ export class UsersService {
 
   async pushNotificationToken(notificationToken: string, user: any) {
     try {
-      console.log(notificationToken, user);
       const result = await this.repository.findOneBy({ id: user.id });
       if (!result) throw new Error('Usuário não foi encontrado.');
 
