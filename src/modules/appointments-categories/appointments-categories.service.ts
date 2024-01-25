@@ -34,7 +34,7 @@ export class AppointmentsCategoriesService {
       }
     }
   }
-
+  
   async findAll() {
     try {
       return {

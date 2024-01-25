@@ -1,5 +1,5 @@
 import { hashSync } from "bcrypt";
-import { BeforeInsert, Column, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export class UserModel {
     @PrimaryGeneratedColumn('uuid')

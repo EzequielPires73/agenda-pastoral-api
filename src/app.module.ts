@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import * as admin from 'firebase-admin';
 import { firebase_config } from './config/firebase';
 import { FirebaseService } from './services/firebase.service';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { FirebaseService } from './services/firebase.service';
     AppointmentsModule,
     AppointmentsCategoriesModule,
     AvailableTimesModule,
-    AuthModule
+    AuthModule,
+    NotificationsModule
   ],
   controllers: [AppController],
   providers: [AppService, FirebaseService],

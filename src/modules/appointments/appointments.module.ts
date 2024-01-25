@@ -7,10 +7,11 @@ import { AppointmentsCategoriesModule } from '../appointments-categories/appoint
 import { FirebaseService } from 'src/services/firebase.service';
 import { User } from '../users/entities/user.entity';
 import { Member } from '../members/entities/member.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment, User, Member]), AppointmentsCategoriesModule],
+  imports: [TypeOrmModule.forFeature([Appointment, User, Member]), AppointmentsCategoriesModule, NotificationsModule],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService, FirebaseService],
+  providers: [AppointmentsService],
 })
 export class AppointmentsModule {}

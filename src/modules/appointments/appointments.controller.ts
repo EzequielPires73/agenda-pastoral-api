@@ -13,7 +13,7 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
-  create(@Body() createAppointmentDto: CreateAppointmentDto) {
+  create(@Req() req: any, @Body() createAppointmentDto: CreateAppointmentDto) {
     return this.appointmentsService.create(createAppointmentDto);
   }
 

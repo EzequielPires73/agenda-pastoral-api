@@ -1,7 +1,8 @@
 import { AppointmentsCategory } from "src/modules/appointments-categories/entities/appointments-category.entity";
 import { Member } from "src/modules/members/entities/member.entity";
+import { Notification } from "src/modules/notifications/entities/notification.entity";
 import { User } from "src/modules/users/entities/user.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export enum AppointmentStatus {
     pendente='pendente',
@@ -38,4 +39,13 @@ export class Appointment {
 
     @ManyToOne(() => User, user => user.appointments)
     responsible: User;
+
+    @OneToMany(() => Notification, notification => notification.appointment)
+    notifications: Notification;
+
+    @CreateDateColumn()
+    created_at: Date;
+
+    @UpdateDateColumn()
+    updated_at: Date;
 }

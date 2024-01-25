@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, Unique } from "typeorm";
 import { UserModel } from "src/models/user.model";
 import { Appointment } from "src/modules/appointments/entities/appointment.entity";
+import { Notification } from "src/modules/notifications/entities/notification.entity";
 
 export enum TypeUserEnum {
     ADMIN = 'admin',
@@ -18,4 +19,7 @@ export class User extends UserModel {
 
     @OneToMany(() => Appointment, appointment => appointment.responsible)
     appointments: Appointment[];
+
+    @OneToMany(() => Notification, notification => notification.user)
+    notifications: Notification;
 }

@@ -1,5 +1,6 @@
 import { UserModel } from "src/models/user.model";
 import { Appointment } from "src/modules/appointments/entities/appointment.entity";
+import { Notification } from "src/modules/notifications/entities/notification.entity";
 import { Column, Entity, OneToMany, Unique } from "typeorm";
 
 @Entity()
@@ -13,4 +14,7 @@ export class Member extends UserModel {
 
     @OneToMany(() => Appointment, appointment => appointment.member)
     appointments: Appointment[];
+
+    @OneToMany(() => Notification, notification => notification.member)
+    notifications: Notification;
 }

@@ -7,25 +7,31 @@ import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
 import { FindAppointmentsDto } from './dto/find-appointments.dto';
 import { isValidDateFormat } from 'src/helpers/date';
-import { FirebaseService } from 'src/services/firebase.service';
 import { Member } from '../members/entities/member.entity';
+import { TypeUserEnum, User } from '../users/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { DestinationNotification } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     @InjectRepository(Appointment) private repository: Repository<Appointment>,
     @InjectRepository(Member) private memberRepository: Repository<Member>,
+    @InjectRepository(User) private userRepository: Repository<User>,
     private appointmentsCategoriesService: AppointmentsCategoriesService,
-    private readonly firebaseService: FirebaseService
+    private readonly notificationService: NotificationsService,
   ) { }
 
   async create(createAppointmentDto: CreateAppointmentDto) {
     try {
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
-
+      
       const category = await this.appointmentsCategoriesService.findOne(categoryId);
       if (!category) throw new Error('Categoria não foi encontrada.');
+      
+      const responsible = await this.userRepository.findOneBy({ id: responsibleId }) ?? await this.userRepository.findOneBy({ type: TypeUserEnum.SUPER_ADMIN });
+      if(!responsible) throw new Error('Responsável não foi encontrado.');
 
       const member = await this.memberRepository.findOneBy({ id: memberId });
       if (!member) throw new Error('Membro não foi encontrado.');
@@ -35,20 +41,24 @@ export class AppointmentsService {
       const appointment = this.repository.create({
         id: await this.generateId(),
         category: categoryId && { id: categoryId },
-        member: memberId && { id: memberId },
-        responsible: responsibleId && { id: responsibleId },
+        member: member,
+        responsible: responsible,
         end: date.toLocaleTimeString(),
         ...data
       });
 
       const result = await this.repository.save(appointment);
 
-      if (result && member.notificationToken) {
-        await this.firebaseService.sendMessaging({
-          token: member.notificationToken,
+      if (result && responsible.notificationToken) {
+        await this.notificationService.create({
+          token: responsible.notificationToken,
           title: category.name,
           body: `Um compromisso foi marcado, confira as informações.`,
-          route: '/notification'
+          route: '/notification',
+          userId: responsible.id,
+          memberId: member.id,
+          destination: DestinationNotification.USER,
+          appointmentId: result.id,
         });
       }
 
@@ -83,12 +93,13 @@ export class AppointmentsService {
 
       const query = this.repository.createQueryBuilder('appointment')
         .leftJoinAndSelect('appointment.member', 'member')
+        .leftJoinAndSelect('appointment.responsible', 'responsible')
         .leftJoinAndSelect('appointment.category', 'category');
 
       /* query.addSelect(['member.id', 'member.name', 'member.email']); */
 
       { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
-      { status ? query.andWhere('appointment.status IN (:...status)', { status: statusArray }) : null }
+      { status && status != "null" ? query.andWhere('appointment.status IN (:...status)', { status: statusArray }) : null }
 
       if (date) {
         if (!isValidDateFormat(date?.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd');
@@ -120,7 +131,7 @@ export class AppointmentsService {
 
   async changeStatus(id: number, status: AppointmentStatus) {
     try {
-      const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category'] });
+      const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category', 'responsible'] });
       if (!appointment) throw new Error('Compromisso não foi encontrado.');
       const member = appointment.member;
       const category = appointment.category;
@@ -131,34 +142,43 @@ export class AppointmentsService {
 
       switch (status) {
         case AppointmentStatus.confirmado:
-          await this.firebaseService.sendMessaging({
+          await this.notificationService.create({
             token: member.notificationToken,
             title: category.name,
             body: `O compromisso foi confirmado.`,
-            route: '/notification'
+            route: '/notification',
+            memberId: member.id,
+            destination: DestinationNotification.MEMBER,
+            appointmentId: id,
           });
           break;
         case AppointmentStatus.declinado:
-          await this.firebaseService.sendMessaging({
+          await this.notificationService.create({
             token: member.notificationToken,
             title: category.name,
             body: `O compromisso foi declinado por motivos maiores.`,
-            route: '/notification'
+            route: '/notification',
+            memberId: member.id,
+            destination: DestinationNotification.MEMBER,
+            appointmentId: id,
           });
           break;
         case AppointmentStatus.finalizado:
-          await this.firebaseService.sendMessaging({
+          await this.notificationService.create({
             token: member.notificationToken,
             title: category.name,
             body: `O compromisso foi finalizado.`,
-            route: '/notification'
+            route: '/notification',
+            memberId: member.id,
+            destination: DestinationNotification.MEMBER,
+            appointmentId: id,
           });
           break;
       }
 
       return {
         success: true,
-        result: await this.repository.findOneBy({ id })
+        result: await this.repository.findOne({ where: {id}, relations: ['member', 'category'] })
       }
     } catch (error) {
       return {
@@ -170,7 +190,7 @@ export class AppointmentsService {
 
   async findOne(id: number) {
     try {
-      const appointment = await this.repository.findOne({where: {id}, relations: ['member', 'category']});
+      const appointment = await this.repository.findOne({where: {id}, relations: ['member', 'category', 'responsible']});
       if(!appointment) throw new Error('Compromisso não foi encontrado.');
 
       return {

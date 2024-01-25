@@ -15,5 +15,5 @@ export class FindAppointmentsDto {
     year: number;
 
     @ApiPropertyOptional({default: AppointmentStatus.pendente})
-    status: AppointmentStatus;
+    status: string;
 }
