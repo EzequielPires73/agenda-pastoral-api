@@ -96,8 +96,6 @@ export class AppointmentsService {
         .leftJoinAndSelect('appointment.responsible', 'responsible')
         .leftJoinAndSelect('appointment.category', 'category');
 
-      /* query.addSelect(['member.id', 'member.name', 'member.email']); */
-
       { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
       { status && status != "null" ? query.andWhere('appointment.status IN (:...status)', { status: statusArray }) : null }
 

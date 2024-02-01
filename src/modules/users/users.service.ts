@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TypeUserEnum, User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { FindUserDto } from './dto/find-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -32,9 +33,14 @@ export class UsersService {
     }
   }
 
-  async findAll() {
+  async findAll(queryDto?: FindUserDto) {
     try {
-      const [results, total] = await this.repository.findAndCount();
+      const types = queryDto.types && queryDto.types != "null" ? queryDto.types.split(',') : null;
+
+      const query = this.repository.createQueryBuilder("user");
+      { types ? query.andWhere('user.type IN (:...types)', { types: types }) : null }
+
+      const [results, total] = await query.getManyAndCount();
 
       return {
         success: true,
@@ -72,7 +78,7 @@ export class UsersService {
       const result = await this.repository.findOneBy({ id: user.id });
       if (!result) throw new Error('Usuário não foi encontrado.');
 
-      await this.repository.update(result.id, {notificationToken: notificationToken ?? null});
+      await this.repository.update(result.id, { notificationToken: notificationToken ?? null });
 
       return {
         success: true,

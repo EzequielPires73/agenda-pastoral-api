@@ -13,7 +13,6 @@ import { MembersModule } from '../members/members.module';
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '24h' },
     }),
   ],
   controllers: [AuthController],
