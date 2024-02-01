@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AppointmentsCategory } from './entities/appointments-category.entity';
 import { Repository } from 'typeorm';
 import slugify from 'slugify';
-import { Appointment } from '../appointments/entities/appointment.entity';
+import { Appointment, AppointmentStatus } from '../appointments/entities/appointment.entity';
 import { AvailableTime } from '../available-times/entities/available-time.entity';
 import { isValidDateFormat } from 'src/helpers/date';
 
@@ -99,7 +99,7 @@ export class AppointmentsCategoriesService {
       const category = await this.repository.findOne({ where: { id } });
       if (!category) throw new Error('Categoria não existe.');
 
-      const appointments = await this.repositoryAppointment.find({ where: { date }, relations: ['category'] });
+      const appointments = await this.repositoryAppointment.find({ where: { date, status: AppointmentStatus.confirmado }, relations: ['category'] });
 
       const availableTimes = await this.repositoryAvailableTime.find({ where: { date }, order: {start: 'ASC'} });
       const results = availableTimes.map(timeSlot => this.generateTimeSlots(timeSlot.start, timeSlot.end, category.duration, appointments));

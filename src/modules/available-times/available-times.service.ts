@@ -53,7 +53,7 @@ export class AvailableTimesService {
 
   async findAll(queryDto: FindAvaibleTimesDto) {
     try {
-      const { month, year } = queryDto;
+      const { month, year, date } = queryDto;
       const query = this.repository.createQueryBuilder('avaible-times');
 
       if (month && year) {
@@ -63,6 +63,8 @@ export class AvailableTimesService {
         query.andWhere('avaible-times.date >= :start', { start: start });
         query.andWhere('avaible-times.date <= :end', { end: end });
       }
+
+      {date ? query.andWhere('avaible-times.date = :date', {date}) : null}
 
       const [results, total] = await query.getManyAndCount();
 

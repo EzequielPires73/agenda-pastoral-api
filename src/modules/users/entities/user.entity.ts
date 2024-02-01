@@ -8,6 +8,7 @@ export enum TypeUserEnum {
     SUPER_ADMIN = 'super_admin',
     DEFAULT = 'default',
     SHEPHERD = 'shepherd',
+    SHEPHERD_PRESIDENT = 'shepherd_president',
     MEMBER = 'member',
 }
 

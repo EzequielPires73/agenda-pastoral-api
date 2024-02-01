@@ -52,7 +52,7 @@ export class AppointmentsService {
       if (result && responsible.notificationToken) {
         await this.notificationService.create({
           token: responsible.notificationToken,
-          title: category.name,
+          title: result.category.name,
           body: `Um compromisso foi marcado, confira as informações.`,
           route: '/notification',
           userId: responsible.id,
