@@ -35,7 +35,7 @@ export class UsersService {
 
   async findAll(queryDto?: FindUserDto) {
     try {
-      const types = queryDto.types && queryDto.types != "null" ? queryDto.types.split(',') : null;
+      const types = queryDto.types && queryDto.types != "null" ? queryDto.types.split(',').map(item => item.trim()) : null;
 
       const query = this.repository.createQueryBuilder("user");
       { types ? query.andWhere('user.type IN (:...types)', { types: types }) : null }

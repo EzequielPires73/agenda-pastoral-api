@@ -11,6 +11,7 @@ import { Member } from '../members/entities/member.entity';
 import { TypeUserEnum, User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DestinationNotification } from '../notifications/entities/notification.entity';
+import { ChangeAppointmentDto } from './dto/change-appointment.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -127,7 +128,7 @@ export class AppointmentsService {
     }
   }
 
-  async changeStatus(id: number, status: AppointmentStatus) {
+  async changeStatus(id: number, {status, responsibleId}: ChangeAppointmentDto) {
     try {
       const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category', 'responsible'] });
       if (!appointment) throw new Error('Compromisso não foi encontrado.');
@@ -136,7 +137,7 @@ export class AppointmentsService {
 
       if (!AppointmentStatus[status]) throw new Error('Status inválido');
 
-      await this.repository.update(id, { status: status });
+      await this.repository.update(id, { status: status, responsible: {id: responsibleId} ?? appointment.responsible });
 
       switch (status) {
         case AppointmentStatus.confirmado:

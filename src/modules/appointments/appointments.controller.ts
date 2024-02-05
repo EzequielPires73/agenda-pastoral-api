@@ -36,7 +36,7 @@ export class AppointmentsController {
 
   @Post('change-status/:id')
   changeStatus(@Param('id') id: string, @Body() changeAppointmentDto: ChangeAppointmentDto) {
-    return this.appointmentsService.changeStatus(+id, changeAppointmentDto.status);
+    return this.appointmentsService.changeStatus(+id, changeAppointmentDto);
   }
 
   @Patch(':id')
