@@ -12,6 +12,7 @@ import { TypeUserEnum, User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DestinationNotification } from '../notifications/entities/notification.entity';
 import { ChangeAppointmentDto } from './dto/change-appointment.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class AppointmentsService {
@@ -28,12 +29,12 @@ export class AppointmentsService {
       console.log(createAppointmentDto);
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
-      
+
       const category = await this.appointmentsCategoriesService.findOne(categoryId);
       if (!category) throw new Error('Categoria não foi encontrada.');
-      
+
       const responsible = await this.userRepository.findOneBy({ id: responsibleId }) ?? await this.userRepository.findOneBy({ type: TypeUserEnum.SUPER_ADMIN });
-      if(!responsible) throw new Error('Responsável não foi encontrado.');
+      if (!responsible) throw new Error('Responsável não foi encontrado.');
 
       const member = await this.memberRepository.findOneBy({ id: memberId });
       if (!member) throw new Error('Membro não foi encontrado.');
@@ -99,8 +100,8 @@ export class AppointmentsService {
         .leftJoinAndSelect('appointment.category', 'category')
         .orderBy('appointment.status', 'ASC');
 
-      if(user && user.type != 'super_admin' && user.type != 'shepherd_president' && user.type != 'member') {
-        query.andWhere('responsible.id = :responsibleId', {responsibleId: user.id})
+      if (user && user.type != 'super_admin' && user.type != 'shepherd_president' && user.type != 'member') {
+        query.andWhere('responsible.id = :responsibleId', { responsibleId: user.id })
       }
 
       { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
@@ -134,7 +135,7 @@ export class AppointmentsService {
     }
   }
 
-  async changeStatus(id: number, {status, responsibleId}: ChangeAppointmentDto) {
+  async changeStatus(id: number, { status, responsibleId }: ChangeAppointmentDto) {
     try {
       const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category', 'responsible'] });
       if (!appointment) throw new Error('Compromisso não foi encontrado.');
@@ -143,7 +144,7 @@ export class AppointmentsService {
 
       if (!AppointmentStatus[status]) throw new Error('Status inválido');
 
-      await this.repository.update(id, { status: status, responsible: responsibleId ? {id: responsibleId} : appointment.responsible });
+      await this.repository.update(id, { status: status, responsible: responsibleId ? { id: responsibleId } : appointment.responsible });
 
       switch (status) {
         case AppointmentStatus.confirmado:
@@ -183,7 +184,7 @@ export class AppointmentsService {
 
       return {
         success: true,
-        result: await this.repository.findOne({ where: {id}, relations: ['member', 'category'] })
+        result: await this.repository.findOne({ where: { id }, relations: ['member', 'category'] })
       }
     } catch (error) {
       return {
@@ -195,8 +196,8 @@ export class AppointmentsService {
 
   async findOne(id: number) {
     try {
-      const appointment = await this.repository.findOne({where: {id}, relations: ['member', 'category', 'responsible']});
-      if(!appointment) throw new Error('Compromisso não foi encontrado.');
+      const appointment = await this.repository.findOne({ where: { id }, relations: ['member', 'category', 'responsible'] });
+      if (!appointment) throw new Error('Compromisso não foi encontrado.');
 
       return {
         success: true,
@@ -216,5 +217,75 @@ export class AppointmentsService {
 
   remove(id: number) {
     return `This action removes a #${id} appointment`;
+  }
+
+  @Cron(CronExpression.EVERY_2_HOURS)
+  async handleCron() {
+    try {
+      const currentDate = new Date();
+
+      const expiredAppointments = await this.repository
+        .createQueryBuilder('appointment')
+        .where('appointment.date < :currentDate', { currentDate })
+        .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
+        .getMany();
+
+      for (let i = 0; i < expiredAppointments.length - 1; i++) {
+        await this.changeStatus(expiredAppointments[i].id, { status: AppointmentStatus.finalizado });
+      }
+
+      return null;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_7AM)
+  async handleCronNotification() {
+    try {
+      const currentDate = new Date();
+      const startOfDay = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate(),
+        0,
+        0,
+        0,
+        0       );
+      const endOfDay = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+
+      const expiredAppointments = await this.repository
+        .createQueryBuilder('appointment')
+        .leftJoinAndSelect('appointment.member', 'member')
+        .leftJoinAndSelect('appointment.responsible', 'responsible')
+        .leftJoinAndSelect('appointment.category', 'category')
+        .where('appointment.date BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay })
+        .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
+        .getMany();
+
+      for (let i = 0; i < expiredAppointments.length - 1; i++) {
+        await this.notificationService.create({
+          token: expiredAppointments[i].member.notificationToken,
+          title: expiredAppointments[i].category.name,
+          body: `Você tem um compromisso confirmado para hoje, veja mais informações.`,
+          route: '/notification',
+          memberId: expiredAppointments[i].member.id,
+          destination: DestinationNotification.MEMBER,
+          appointmentId: expiredAppointments[i].id,
+        });
+      }
+
+      return null;
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

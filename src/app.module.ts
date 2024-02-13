@@ -13,9 +13,11 @@ import * as admin from 'firebase-admin';
 import { firebase_config } from './config/firebase';
 import { FirebaseService } from './services/firebase.service';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
