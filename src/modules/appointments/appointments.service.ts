@@ -88,7 +88,7 @@ export class AppointmentsService {
     }
   }
 
-  async findAll(queryDto: FindAppointmentsDto) {
+  async findAll(queryDto: FindAppointmentsDto, user?: any) {
     try {
       const { date, year, month, memberId, status } = queryDto;
       const statusArray = status ? status.split(',') : null;
@@ -96,7 +96,12 @@ export class AppointmentsService {
       const query = this.repository.createQueryBuilder('appointment')
         .leftJoinAndSelect('appointment.member', 'member')
         .leftJoinAndSelect('appointment.responsible', 'responsible')
-        .leftJoinAndSelect('appointment.category', 'category');
+        .leftJoinAndSelect('appointment.category', 'category')
+        .orderBy('appointment.status', 'ASC');
+
+      if(user && user.type != 'super_admin' && user.type != 'shepherd_president' && user.type != 'member') {
+        query.andWhere('responsible.id = :responsibleId', {responsibleId: user.id})
+      }
 
       { memberId ? query.andWhere('member.id = :memberId', { memberId }) : null }
       { status && status != "null" ? query.andWhere('appointment.status IN (:...status)', { status: statusArray }) : null }

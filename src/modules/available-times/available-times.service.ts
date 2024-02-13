@@ -63,8 +63,9 @@ export class AvailableTimesService {
         query.andWhere('avaible-times.date >= :start', { start: start });
         query.andWhere('avaible-times.date <= :end', { end: end });
       }
-
+      
       {date ? query.andWhere('avaible-times.date = :date', {date}) : null}
+
 
       const [results, total] = await query.getManyAndCount();
 
@@ -127,7 +128,7 @@ export class AvailableTimesService {
   async update(id: number, updateAvailableTimeDto: UpdateAvailableTimeDto) {
     try {
       const availableTime = await this.repository.findOneBy({ id });
-      if (availableTime) throw new Error('Tempo disponível não encontrado.');
+      if (!availableTime) throw new Error('Tempo disponível não encontrado.');
 
       await this.repository.update(id, updateAvailableTimeDto);
 
@@ -147,7 +148,7 @@ export class AvailableTimesService {
   async remove(id: number) {
     try {
       const availableTime = await this.repository.findOneBy({ id });
-      if (availableTime) throw new Error('Tempo disponível não encontrado.');
+      if (!availableTime) throw new Error('Tempo disponível não encontrado.');
 
       await this.repository.delete(id);
 

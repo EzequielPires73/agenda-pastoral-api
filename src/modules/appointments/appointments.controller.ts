@@ -17,9 +17,11 @@ export class AppointmentsController {
     return this.appointmentsService.create(createAppointmentDto);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   @Get()
-  findAll(@Query() query: FindAppointmentsDto) {
-    return this.appointmentsService.findAll(query);
+  findAll(@Query() query: FindAppointmentsDto, @Req() {user}: any) {
+    return this.appointmentsService.findAll(query, user);
   }
   
   @ApiBearerAuth()
