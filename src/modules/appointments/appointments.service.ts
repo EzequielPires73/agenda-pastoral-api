@@ -25,6 +25,7 @@ export class AppointmentsService {
 
   async create(createAppointmentDto: CreateAppointmentDto) {
     try {
+      console.log(createAppointmentDto);
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
       
@@ -137,7 +138,7 @@ export class AppointmentsService {
 
       if (!AppointmentStatus[status]) throw new Error('Status inválido');
 
-      await this.repository.update(id, { status: status, responsible: {id: responsibleId} ?? appointment.responsible });
+      await this.repository.update(id, { status: status, responsible: responsibleId ? {id: responsibleId} : appointment.responsible });
 
       switch (status) {
         case AppointmentStatus.confirmado:
