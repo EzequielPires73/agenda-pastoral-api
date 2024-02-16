@@ -31,7 +31,7 @@ export class Notification {
     @ManyToOne(() => Member, member => member.notifications)
     member: Member;
     
-    @ManyToOne(() => Appointment, appointment => appointment.notifications)
+    @ManyToOne(() => Appointment, appointment => appointment.notifications, {onDelete: 'CASCADE'})
     appointment: Appointment;
 
     @CreateDateColumn()

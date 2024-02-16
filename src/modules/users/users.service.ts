@@ -106,10 +106,11 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const result = await this.repository.findOneBy({ id });
+      const {password, ...data} = updateUserDto;
 
       if (!result) throw new Error('Usuário não foi encontrado.');
 
-      await this.repository.update(id, updateUserDto);
+      await this.repository.update(id, data);
 
       return {
         success: true,

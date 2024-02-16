@@ -26,17 +26,17 @@ export class AppointmentsService {
 
   async create(createAppointmentDto: CreateAppointmentDto) {
     try {
-      console.log(createAppointmentDto);
+
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
 
       const category = await this.appointmentsCategoriesService.findOne(categoryId);
       if (!category) throw new Error('Categoria não foi encontrada.');
 
-      const responsible = await this.userRepository.findOneBy({ id: responsibleId }) ?? await this.userRepository.findOneBy({ type: TypeUserEnum.SUPER_ADMIN });
+      const responsible = responsibleId ? await this.userRepository.findOne({ where: { id: responsibleId } }) : await this.userRepository.findOne({ where: { type: TypeUserEnum.SUPER_ADMIN } });
       if (!responsible) throw new Error('Responsável não foi encontrado.');
 
-      const member = await this.memberRepository.findOneBy({ id: memberId });
+      const member = memberId ? await this.memberRepository.findOne({ where: { id: memberId } }) : null;
       if (!member) throw new Error('Membro não foi encontrado.');
 
       date.setMinutes(date.getMinutes() + category.duration);
@@ -251,7 +251,7 @@ export class AppointmentsService {
         0,
         0,
         0,
-        0       );
+        0);
       const endOfDay = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth(),

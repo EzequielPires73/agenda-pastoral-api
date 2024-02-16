@@ -97,11 +97,12 @@ export class MembersService {
 
   async update(id: string, updateMemberDto: UpdateMemberDto) {
     try {
+      const {password, ...data} = updateMemberDto;
       const result = await this.repository.findOneBy({ id });
 
       if (!result) throw new Error('Membro não foi encontrado.');
 
-      await this.repository.update(id, updateMemberDto);
+      await this.repository.update(id, data);
 
       return {
         success: true,

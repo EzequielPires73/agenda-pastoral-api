@@ -15,7 +15,9 @@ export class AppointmentsCategoriesService {
     @InjectRepository(AppointmentsCategory) private repository: Repository<AppointmentsCategory>,
     @InjectRepository(Appointment) private repositoryAppointment: Repository<Appointment>,
     @InjectRepository(AvailableTime) private repositoryAvailableTime: Repository<AvailableTime>,
-  ) { }
+  ) { 
+    this.verifyEmpity();
+  }
 
   async create(createAppointmentsCategoryDto: CreateAppointmentsCategoryDto) {
     try {
@@ -154,5 +156,22 @@ export class AppointmentsCategoriesService {
     }
 
     return timeSlots;
+  }
+
+  async verifyEmpity() {
+    try {
+      const category = await this.repository.findOneBy({name: 'Outro motivo'});
+      if(category) throw new Error('Catecoria já existe.');
+
+      return {
+        success: true,
+        result: await this.repository.save({name: 'Outro motivo', duration: 60, slug: 'outro-motivo'})
+      }      
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
   }
 }
