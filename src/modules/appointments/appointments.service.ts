@@ -219,18 +219,20 @@ export class AppointmentsService {
     return `This action removes a #${id} appointment`;
   }
 
-  @Cron(CronExpression.EVERY_2_HOURS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCron() {
     try {
       const currentDate = new Date();
-
+      
       const expiredAppointments = await this.repository
-        .createQueryBuilder('appointment')
-        .where('appointment.date < :currentDate', { currentDate })
-        .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
-        .getMany();
+      .createQueryBuilder('appointment')
+      .where('appointment.date < :currentDate', { currentDate })
+      .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
+      .getMany();
+      
+      console.log(expiredAppointments);
 
-      for (let i = 0; i < expiredAppointments.length - 1; i++) {
+      for (let i = 0; i < expiredAppointments.length; i++) {
         await this.changeStatus(expiredAppointments[i].id, { status: AppointmentStatus.finalizado });
       }
 
@@ -240,7 +242,7 @@ export class AppointmentsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_7AM)
+  @Cron(CronExpression.EVERY_2_HOURS)
   async handleCronNotification() {
     try {
       const currentDate = new Date();
@@ -271,7 +273,7 @@ export class AppointmentsService {
         .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
         .getMany();
 
-      for (let i = 0; i < expiredAppointments.length - 1; i++) {
+      for (let i = 0; i < expiredAppointments.length; i++) {
         await this.notificationService.create({
           token: expiredAppointments[i].member.notificationToken,
           title: expiredAppointments[i].category.name,
