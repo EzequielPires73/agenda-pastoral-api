@@ -33,6 +33,35 @@ export class AppointmentsController {
     return this.appointmentsService.findAll({...query, memberId: user.id});
   }
 
+  @Get('report')
+  async report() {
+    const month = await this.appointmentsService.generateMonthlyReportLast6Months().then(res => res.results);
+    const status = await this.appointmentsService.generateReportByStatus().then(res => res.results);
+    const category = await this.appointmentsService.generateReportByCategory().then(res => res.results);
+    
+    return {
+      success: true,
+      month,
+      status,
+      category,
+    };
+  }
+
+  @Get('report/month')
+  reportMonth() {
+    return this.appointmentsService.generateMonthlyReportLast6Months();
+  }
+  
+  @Get('report/status')
+  reportByStatus() {
+    return this.appointmentsService.generateReportByStatus();
+  }
+  
+  @Get('report/category')
+  reportByCategory() {
+    return this.appointmentsService.generateReportByCategory();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.appointmentsService.findOne(+id);

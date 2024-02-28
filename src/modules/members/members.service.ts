@@ -3,7 +3,7 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 
 @Injectable()
 export class MembersService {
@@ -133,6 +133,43 @@ export class MembersService {
         success: false,
         message: error.message
       }
+    }
+  }
+
+  async generateMonthlyReportLast6Months() {
+    try {
+      const currentDate = new Date();
+      const sixMonthsAgoDate = new Date();
+      sixMonthsAgoDate.setMonth(sixMonthsAgoDate.getMonth() - 6);
+      const monthlyCounts = [];
+
+      for (let i = 0; i <= 6; i++) {
+        const startDate = new Date(sixMonthsAgoDate.getFullYear(), sixMonthsAgoDate.getMonth(), 1);
+        const endDate = new Date(sixMonthsAgoDate.getFullYear(), sixMonthsAgoDate.getMonth() + 1, 0);
+
+        const count = await this.repository.count({
+          where: {
+            createdAt: Between(startDate, endDate),
+          },
+        });
+
+        monthlyCounts.push({
+          name: startDate.toLocaleString('default', { month: 'long' }),
+          count: count,
+        });
+
+        sixMonthsAgoDate.setMonth(sixMonthsAgoDate.getMonth() + 1);
+      }
+
+      return {
+        success: true,
+        results: monthlyCounts,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
     }
   }
 }

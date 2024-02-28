@@ -1,5 +1,5 @@
 import { hashSync } from "bcrypt";
-import { BeforeInsert, Column, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export class UserModel {
     @PrimaryGeneratedColumn('uuid')
@@ -22,6 +22,12 @@ export class UserModel {
 
     @Column({nullable: true})
     notificationToken: string;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 
     @BeforeInsert()
     hashPassword() {

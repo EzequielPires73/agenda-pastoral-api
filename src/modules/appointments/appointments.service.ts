@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
 import { FindAppointmentsDto } from './dto/find-appointments.dto';
@@ -288,6 +288,95 @@ export class AppointmentsService {
       return null;
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async generateMonthlyReportLast6Months() {
+    try {
+      const currentDate = new Date();
+      const sixMonthsAgoDate = new Date();
+      sixMonthsAgoDate.setMonth(sixMonthsAgoDate.getMonth() - 6);
+      const monthlyCounts = [];
+
+      for (let i = 0; i <= 6; i++) {
+        const startDate = new Date(sixMonthsAgoDate.getFullYear(), sixMonthsAgoDate.getMonth(), 1);
+        const endDate = new Date(sixMonthsAgoDate.getFullYear(), sixMonthsAgoDate.getMonth() + 1, 0);
+
+        const count = await this.repository.count({
+          where: {
+            created_at: Between(startDate, endDate),
+          },
+        });
+
+        monthlyCounts.push({
+          name: startDate.toLocaleString('default', { month: 'long' }),
+          count: count,
+        });
+
+        sixMonthsAgoDate.setMonth(sixMonthsAgoDate.getMonth() + 1);
+      }
+
+      return {
+        success: true,
+        results: monthlyCounts,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  async generateReportByStatus() {
+    try {
+      const report = await this.repository
+        .createQueryBuilder('appointment')
+        .select(['appointment.status as name', 'COUNT(*) as count'])
+        .groupBy('appointment.status')
+        .getRawMany();
+
+        return {
+          success: true,
+          results: report.map(i => {
+            return {
+              name: i.name,
+              count: +i.count,
+            }
+          }),
+        }
+    } catch(error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  async generateReportByCategory() {
+    try {
+      const report = await this.repository
+        .createQueryBuilder('appointment')
+        .leftJoinAndSelect('appointment.category', 'category')
+        .select(['category.name as name', 'COUNT(*) as count'])
+        .groupBy('category.name')
+        .getRawMany();
+
+        return {
+          success: true,
+          results: report.map(i => {
+            return {
+              name: i.name,
+              count: +i.count,
+            }
+          }),
+        }
+    } catch(error) {
+      console.log(error.name);
+      return {
+        success: false,
+        message: error.message,
+      };
     }
   }
 }

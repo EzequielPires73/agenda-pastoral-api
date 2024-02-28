@@ -20,6 +20,11 @@ export class MembersController {
     return this.membersService.findAll();
   }
 
+  @Get('report')
+  report() {
+    return this.membersService.generateMonthlyReportLast6Months();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);
