@@ -29,6 +29,7 @@ export class AppointmentsService {
 
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
+      const dateStartFull = new Date(`${data.date}T${data.start}`);
 
       const category = await this.appointmentsCategoriesService.findOne(categoryId);
       if (!category) throw new Error('Categoria não foi encontrada.');
@@ -47,6 +48,7 @@ export class AppointmentsService {
         member: member,
         responsible: responsible,
         end: date.toLocaleTimeString(),
+        dateStartFull,
         ...data
       });
 
@@ -223,17 +225,47 @@ export class AppointmentsService {
   async handleCron() {
     try {
       const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 5);
       
       const expiredAppointments = await this.repository
       .createQueryBuilder('appointment')
-      .where('appointment.date < :currentDate', { currentDate })
+      .where('appointment.dateStartFull < :currentDate', { currentDate })
       .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
       .getMany();
-      
-      console.log(expiredAppointments);
 
       for (let i = 0; i < expiredAppointments.length; i++) {
         await this.changeStatus(expiredAppointments[i].id, { status: AppointmentStatus.finalizado });
+      }
+
+      return null;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async handleCronLembrete() {
+    try {
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const futureDate = new Date(currentDate.getTime() + 20 * 60000);
+      
+      const expiredAppointments = await this.repository
+      .createQueryBuilder('appointment')
+      .where('appointment.dateStartFull BETWEEN :currentDate AND :futureDate', { currentDate, futureDate })
+      .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
+      .getMany();
+
+      for (let i = 0; i < expiredAppointments.length; i++) {
+        await this.notificationService.create({
+          token: expiredAppointments[i].member.notificationToken,
+          title: expiredAppointments[i].category.name,
+          body: `Você tem um compromisso confirmado para hoje às ${expiredAppointments[i].start}, veja mais informações.`,
+          route: '/notification',
+          memberId: expiredAppointments[i].member.id,
+          destination: DestinationNotification.MEMBER,
+          appointmentId: expiredAppointments[i].id,
+        });
       }
 
       return null;
