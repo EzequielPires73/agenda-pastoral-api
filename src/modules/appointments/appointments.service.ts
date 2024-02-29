@@ -6,7 +6,7 @@ import { Between, Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { AppointmentsCategoriesService } from '../appointments-categories/appointments-categories.service';
 import { FindAppointmentsDto } from './dto/find-appointments.dto';
-import { isValidDateFormat } from 'src/helpers/date';
+import { formattedDate, isValidDateFormat } from 'src/helpers/date';
 import { Member } from '../members/entities/member.entity';
 import { TypeUserEnum, User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -226,12 +226,12 @@ export class AppointmentsService {
     try {
       const currentDate = new Date();
       currentDate.setHours(currentDate.getHours() - 5);
-      
+
       const expiredAppointments = await this.repository
-      .createQueryBuilder('appointment')
-      .where('appointment.dateStartFull < :currentDate', { currentDate })
-      .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
-      .getMany();
+        .createQueryBuilder('appointment')
+        .where('appointment.dateStartFull < :currentDate', { currentDate })
+        .andWhere('appointment.status IN (:...status)', { status: ['pendente', 'confirmado'] })
+        .getMany();
 
       for (let i = 0; i < expiredAppointments.length; i++) {
         await this.changeStatus(expiredAppointments[i].id, { status: AppointmentStatus.finalizado });
@@ -243,18 +243,23 @@ export class AppointmentsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCronLembrete() {
     try {
       const currentDate = new Date();
-      currentDate.setHours(currentDate.getHours() - 3);
-      const futureDate = new Date(currentDate.getTime() + 20 * 60000);
-      
+      currentDate.setHours(currentDate.getHours());
+      const futureDate = new Date(currentDate.getTime() + 10 * 60000);
+      console.log(formattedDate(currentDate));
+      console.log(formattedDate(futureDate));
+
       const expiredAppointments = await this.repository
-      .createQueryBuilder('appointment')
-      .where('appointment.dateStartFull BETWEEN :currentDate AND :futureDate', { currentDate, futureDate })
-      .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
-      .getMany();
+        .createQueryBuilder('appointment')
+        .leftJoinAndSelect('appointment.member', 'member')
+        .leftJoinAndSelect('appointment.responsible', 'responsible')
+        .leftJoinAndSelect('appointment.category', 'category')
+        .where('appointment.dateStartFull BETWEEN :currentDate AND :futureDate', { currentDate: formattedDate(currentDate), futureDate: formattedDate(futureDate) })
+        .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
+        .getMany();
 
       console.log(expiredAppointments);
 
@@ -370,16 +375,16 @@ export class AppointmentsService {
         .groupBy('appointment.status')
         .getRawMany();
 
-        return {
-          success: true,
-          results: report.map(i => {
-            return {
-              name: i.name,
-              count: +i.count,
-            }
-          }),
-        }
-    } catch(error) {
+      return {
+        success: true,
+        results: report.map(i => {
+          return {
+            name: i.name,
+            count: +i.count,
+          }
+        }),
+      }
+    } catch (error) {
       return {
         success: false,
         message: error.message,
@@ -396,16 +401,16 @@ export class AppointmentsService {
         .groupBy('category.name')
         .getRawMany();
 
-        return {
-          success: true,
-          results: report.map(i => {
-            return {
-              name: i.name,
-              count: +i.count,
-            }
-          }),
-        }
-    } catch(error) {
+      return {
+        success: true,
+        results: report.map(i => {
+          return {
+            name: i.name,
+            count: +i.count,
+          }
+        }),
+      }
+    } catch (error) {
       console.log(error.name);
       return {
         success: false,
