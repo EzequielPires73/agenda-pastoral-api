@@ -243,7 +243,7 @@ export class AppointmentsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handleCronLembrete() {
     try {
       const currentDate = new Date();
