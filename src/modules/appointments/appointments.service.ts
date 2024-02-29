@@ -243,11 +243,11 @@ export class AppointmentsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCronLembrete() {
     try {
       const currentDate = new Date();
-      currentDate.setHours(currentDate.getHours());
+      currentDate.setHours(currentDate.getHours() - 3);
       const futureDate = new Date(currentDate.getTime() + 10 * 60000);
       console.log(formattedDate(currentDate));
       console.log(formattedDate(futureDate));
