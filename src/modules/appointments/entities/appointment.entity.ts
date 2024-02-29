@@ -22,7 +22,7 @@ export class Appointment {
     @Column({ type: 'date' })
     date: Date;
     
-    @Column({ type: 'date' })
+    @Column()
     dateStartFull: Date;
     
     @Column()

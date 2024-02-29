@@ -243,7 +243,7 @@ export class AppointmentsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCronLembrete() {
     try {
       const currentDate = new Date();
@@ -255,6 +255,8 @@ export class AppointmentsService {
       .where('appointment.dateStartFull BETWEEN :currentDate AND :futureDate', { currentDate, futureDate })
       .andWhere('appointment.status IN (:...status)', { status: ['confirmado'] })
       .getMany();
+
+      console.log(expiredAppointments);
 
       for (let i = 0; i < expiredAppointments.length; i++) {
         await this.notificationService.create({
