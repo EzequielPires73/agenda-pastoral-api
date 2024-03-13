@@ -37,10 +37,10 @@ export class Appointment {
     @Column({type: 'simple-enum', enum: AppointmentStatus, default: AppointmentStatus.pendente})
     status: AppointmentStatus;
 
-    @ManyToOne(() => Member, member => member.appointments)
+    @ManyToOne(() => Member, member => member.appointments, {onDelete: 'CASCADE'})
     member: Member;
 
-    @ManyToOne(() => User, user => user.appointments)
+    @ManyToOne(() => User, user => user.appointments, {onDelete: 'CASCADE'})
     responsible: User;
 
     @OneToMany(() => Notification, notification => notification.appointment)

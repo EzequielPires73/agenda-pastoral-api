@@ -25,10 +25,10 @@ export class Notification {
     @Column()
     route: string;
 
-    @ManyToOne(() => User, user => user.notifications)
+    @ManyToOne(() => User, user => user.notifications, {onDelete: 'CASCADE'})
     user: User;
 
-    @ManyToOne(() => Member, member => member.notifications)
+    @ManyToOne(() => Member, member => member.notifications, {onDelete: 'CASCADE'})
     member: Member;
     
     @ManyToOne(() => Appointment, appointment => appointment.notifications, {onDelete: 'CASCADE'})
