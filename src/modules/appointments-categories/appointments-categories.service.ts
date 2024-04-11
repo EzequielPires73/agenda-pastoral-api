@@ -140,7 +140,7 @@ export class AppointmentsCategoriesService {
       );
 
       if (!isInConflict) {
-        timeSlots.push({ start: this.convertAMPMto24(startFormatted), end: this.convertAMPMto24(endFormatted) });
+        timeSlots.push({ start: this.convertTo24HourFormat(startFormatted), end: this.convertTo24HourFormat(endFormatted) });
         currentTime.setMinutes(currentTime.getMinutes() + interval);
         endTimeWithDuration.setMinutes(endTimeWithDuration.getMinutes() + interval);
       } else {
@@ -158,17 +158,21 @@ export class AppointmentsCategoriesService {
     return timeSlots;
   }
 
-  convertAMPMto24(timeString) {
+  convertTo24HourFormat(timeString) {
     const [time, period] = timeString.split(' ');
+
     let [hours, minutes] = time.split(':');
 
-    if (period === 'PM') {
-      hours = (hours % 12) + 12;
-    } else {
-      hours %= 12;
+    hours = parseInt(hours, 10);
+    minutes = parseInt(minutes, 10);
+
+    if (period === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
     }
 
-    return `${hours.padStart(2, '0')}:${minutes}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
   async verifyEmpity() {
