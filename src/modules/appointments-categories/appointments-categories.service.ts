@@ -15,7 +15,7 @@ export class AppointmentsCategoriesService {
     @InjectRepository(AppointmentsCategory) private repository: Repository<AppointmentsCategory>,
     @InjectRepository(Appointment) private repositoryAppointment: Repository<Appointment>,
     @InjectRepository(AvailableTime) private repositoryAvailableTime: Repository<AvailableTime>,
-  ) { 
+  ) {
     this.verifyEmpity();
   }
 
@@ -36,7 +36,7 @@ export class AppointmentsCategoriesService {
       }
     }
   }
-  
+
   async findAll() {
     try {
       return {
@@ -96,14 +96,14 @@ export class AppointmentsCategoriesService {
 
   async availableTimes(id, date) {
     try {
-      if(!isValidDateFormat(date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd'); 
+      if (!isValidDateFormat(date.toString())) throw new Error('Formato da data deve ser yyyy-MM-dd');
 
       const category = await this.repository.findOne({ where: { id } });
       if (!category) throw new Error('Categoria não existe.');
 
       const appointments = await this.repositoryAppointment.find({ where: { date, status: AppointmentStatus.confirmado }, relations: ['category'] });
 
-      const availableTimes = await this.repositoryAvailableTime.find({ where: { date }, order: {start: 'ASC'} });
+      const availableTimes = await this.repositoryAvailableTime.find({ where: { date }, order: { start: 'ASC' } });
       const results = availableTimes.map(timeSlot => this.generateTimeSlots(timeSlot.start, timeSlot.end, category.duration, appointments));
 
       const times = [];
@@ -140,7 +140,7 @@ export class AppointmentsCategoriesService {
       );
 
       if (!isInConflict) {
-        timeSlots.push({ start: startFormatted, end: endFormatted });
+        timeSlots.push({ start: this.convertAMPMto24(startFormatted), end: this.convertAMPMto24(endFormatted) });
         currentTime.setMinutes(currentTime.getMinutes() + interval);
         endTimeWithDuration.setMinutes(endTimeWithDuration.getMinutes() + interval);
       } else {
@@ -158,15 +158,28 @@ export class AppointmentsCategoriesService {
     return timeSlots;
   }
 
+  convertAMPMto24(timeString) {
+    const [time, period] = timeString.split(' ');
+    let [hours, minutes] = time.split(':');
+
+    if (period === 'PM') {
+      hours = (hours % 12) + 12;
+    } else {
+      hours %= 12;
+    }
+
+    return `${hours.padStart(2, '0')}:${minutes}`;
+  }
+
   async verifyEmpity() {
     try {
-      const category = await this.repository.findOneBy({name: 'Outro motivo'});
-      if(category) throw new Error('Catecoria já existe.');
+      const category = await this.repository.findOneBy({ name: 'Outro motivo' });
+      if (category) throw new Error('Catecoria já existe.');
 
       return {
         success: true,
-        result: await this.repository.save({name: 'Outro motivo', duration: 60, slug: 'outro-motivo'})
-      }      
+        result: await this.repository.save({ name: 'Outro motivo', duration: 60, slug: 'outro-motivo' })
+      }
     } catch (error) {
       return {
         success: false,
