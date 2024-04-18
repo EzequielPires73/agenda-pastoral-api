@@ -16,7 +16,7 @@ export class AppointmentsController {
   @UseGuards(AuthGuard)
   @Post()
   create(@Req() req: any, @Body() createAppointmentDto: CreateAppointmentDto) {
-    return this.appointmentsService.create(createAppointmentDto);
+    return this.appointmentsService.create(createAppointmentDto, req.user);
   }
 
   @ApiBearerAuth()

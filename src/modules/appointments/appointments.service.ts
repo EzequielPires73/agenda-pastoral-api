@@ -24,8 +24,9 @@ export class AppointmentsService {
     private readonly notificationService: NotificationsService,
   ) { }
 
-  async create(createAppointmentDto: CreateAppointmentDto) {
+  async create(createAppointmentDto: CreateAppointmentDto, user: any) {
     try {
+      console.log(user);
 
       const { categoryId, memberId, responsibleId, ...data } = createAppointmentDto;
       const date = new Date(`${data.date}T${data.start}`);
@@ -62,7 +63,7 @@ export class AppointmentsService {
           route: '/notification',
           userId: responsible.id,
           memberId: member.id,
-          destination: DestinationNotification.USER,
+          destination: user?.type == 'member' ? DestinationNotification.USER : DestinationNotification.USER,
           appointmentId: result.id,
         });
       }
